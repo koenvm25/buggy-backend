@@ -14,16 +14,22 @@ const credentials = {
 const client = new Client(credentials);
 client.connect();
 
-const getIssuesQuery = "SELECT * FROM issue ORDER BY id ASC";
-const getIssueQuery = "SELECT * FROM issue WHERE id = $1";
+const getIssuesQuery =
+  "SELECT issue.issue_id, issue.created_at, issue.title, issue.description, issue.updated_at, project.name, project.project_id, project.estimated_end_date FROM issue INNER JOIN project ON issue.project_id=project.project_id ORDER BY issue_id ASC";
+const getIssueQuery =
+  "SELECT issue.issue_id, issue.created_at, issue.title, issue.description, issue.updated_at, project.name, project.project_id, project.estimated_end_date FROM issue INNER JOIN project ON issue.project_id=project.project_id WHERE issue_id = 8";
 const addIssueQuery =
-  "INSERT INTO issue(title, description, project) VALUES($1, $2, $3) RETURNING id";
-const updateIssueQuery = "UPDATE issue SET title = $1, description = $2, updated_at = $3 WHERE id = $4"
-const getIssuesPerProjectQuery = "SELECT * FROM issue where project = $1";
+  "INSERT INTO issue(title, description, project) VALUES($1, $2, $3) RETURNING issue)id";
+const updateIssueQuery =
+  "UPDATE issue SET title = $1, description = $2, updated_at = $3 WHERE issue_id = $4";
+const getIssuesPerProjectQuery = "SELECT * FROM issue where project_id = $1";
 
 export const getIssues = async () => {
   const results = await client.query(getIssuesQuery);
-  return results.rows;
+  const issues = results.rows.map((row) => {
+    return mapToIssue(row);
+  })
+  return issues;
 };
 
 export const getIssue = async (id) => {
@@ -68,3 +74,17 @@ export const getIssuesPerProject = async (id) => {
 //     await client.query
 //   }
 // }
+
+const mapToIssue = (row) => {
+  const issue = {
+    issueId: row.issue_id,
+    createdAt: row.created_at,
+    title: row.title,
+    description: row.description,
+    updatedAt: row.updated_at,
+    projectId: row.project_id,
+    projectName: row.name,
+    projectEstimatedEndDate: row.estimated_end_date
+  };
+  return issue;
+};

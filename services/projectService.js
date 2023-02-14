@@ -11,41 +11,26 @@ const credentials = {
 const client = new Client(credentials);
 client.connect();
 
-const getProjectsQuery = "SELECT * FROM project ORDER BY id ASC";
-const getProjectQuery = "SELECT * FROM project WHERE id = $1";
+const getProjectsQuery = "SELECT * FROM project ORDER BY project_id ASC";
+const getProjectQuery = "SELECT * FROM project WHERE project_id = $1";
 const addProjectQuery =
-  "INSERT INTO project(name, description, estimated_end_date, updated_at) VALUES($1, $2, $3, $4) RETURNING id";
+  "INSERT INTO project(name, description, estimated_end_date, updated_at) VALUES($1, $2, $3, $4) RETURNING project_id";
 const updateProjectQuery =
-  "UPDATE project SET name = $1, description = $2, estimated_end_date = $3, updated_at = $4 WHERE id = $5";
+  "UPDATE project SET name = $1, description = $2, estimated_end_date = $3, updated_at = $4 WHERE project_id = $5";
 
 export const getProjects = async () => {
-  const projects = []
   const results = await client.query(getProjectsQuery);
-  results.rows.map((row) => {
-    const project = {
-      id: row.id,
-      createdAt: row.created_at,
-      name: row.name,
-      description: row.description,
-      estimatedEndDate: row.estimated_end_date,
-      updatedAt: row.updated_at,
-    }
-    projects.push(project)
-  })
+  const projects = results.rows.map((row) => {
+    return mapToProject(row)
+    // projects.push(project);
+  });
   return projects;
 };
 
 export const getProject = async (id) => {
   try {
     const results = await client.query(getProjectQuery, [id]);
-    const project = {
-      id: results.rows[0].id,
-      createdAt: results.rows[0].created_at,
-      name: results.rows[0].name,
-      description: results.rows[0].description,
-      estimatedEndDate: results.rows[0].estimated_end_date,
-      updatedAt: results.rows[0].updated_at,
-    }
+    const project = mapToProject(results.rows[0])
     return project;
   } catch (err) {
     console.error(err.stack);
@@ -75,4 +60,16 @@ export const updateProject = async (project, id) => {
     new Date(),
     id,
   ]);
+};
+
+const mapToProject = (row) => {
+  const project = {
+    projectId: row.project_id,
+    createdAt: row.created_at,
+    name: row.name,
+    description: row.description,
+    estimatedEndDate: row.estimated_end_date,
+    updatedAt: row.updated_at,
+  };
+  return project;
 };
